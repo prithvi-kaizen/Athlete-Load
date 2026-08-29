@@ -51,3 +51,4 @@ data/processed/*.parquet
 
 # Matplotlib cache
 .matplotlib/
+.vercel

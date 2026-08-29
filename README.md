@@ -1,9 +1,15 @@
 # AthleteLoad: Explainable Injury-Risk Modeling from Football Training and Wellness Data
 
+[![Live Demo: Vercel](https://img.shields.io/badge/Live%20Demo-athlete--load.vercel.app-black?logo=vercel&logoColor=white&style=for-the-badge)](https://athlete-load.vercel.app)
+
 [![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![Tests: Pytest](https://img.shields.io/badge/tests-passing-brightgreen.svg)](https://docs.pytest.org/)
+
+> **Live Interactive App**: [https://athlete-load.vercel.app](https://athlete-load.vercel.app)
+>
+> Test what-if scenarios with interactive ACWR sliders, real-time TreeSHAP waterfall risk attributions, next-day readiness forecasts, and longitudinal SoccerMon athlete timelines.
 
 An explainable sports-science machine learning system that uses daily training loads and self-reported wellness logs to estimate short-term football injury risk (7-day window) and explain the exact physiological drivers behind every prediction.
 

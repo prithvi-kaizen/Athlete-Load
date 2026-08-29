@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AthleteLoad | Explainable Football Injury-Risk Modeling</title>
+  <meta name="description" content="Explainable sports-science machine learning system for short-term injury risk and athlete readiness forecasting using SoccerMon data.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+  <!-- Top Navigation -->
+  <header class="navbar">
+    <div class="nav-container">
+      <div class="brand">
+        <span class="brand-icon">⚽</span>
+        <div class="brand-text">
+          <span class="brand-title">AthleteLoad</span>
+          <span class="brand-sub">Explainable Sports Science ML</span>
+        </div>
+      </div>
+      <div class="nav-links">
+        <a href="#simulator" class="nav-link active">Risk Simulator</a>
+        <a href="#shap-section" class="nav-link">SHAP Explainer</a>
+        <a href="#timeline" class="nav-link">Timeline Explorer</a>
+        <a href="#benchmarks" class="nav-link">Research Metrics</a>
+        <a href="https://github.com/prithvi-kaizen/Athlete-Load" target="_blank" rel="noreferrer" class="btn-github">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+          GitHub
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero-section">
+    <div class="hero-container">
+      <div class="badge-pill">
+        <span class="pulse-dot"></span>
+        SoccerMon Research Pipeline &bull; 36,550 Athlete-Days
+      </div>
+      <h1 class="hero-title">Explainable Football Injury-Risk Modeling</h1>
+      <p class="hero-description">
+        Estimating short-term non-contact injury risk (7-day window) and forecasting daily athlete readiness using training workload metrics and daily wellness check-ins.
+      </p>
+      
+      <!-- Preset Scenarios -->
+      <div class="presets-wrapper">
+        <span class="preset-label">Test Preset Scenarios:</span>
+        <div class="preset-buttons">
+          <button class="preset-btn active" onclick="loadPreset('recovered')">🟢 Optimal Recovery</button>
+          <button class="preset-btn" onclick="loadPreset('overtraining')">🔴 Overtraining & Fatigue Spike</button>
+          <button class="preset-btn" onclick="loadPreset('spike')">🟠 Workload Surge (ACWR &gt; 1.5)</button>
+          <button class="preset-btn" onclick="loadPreset('sleep_debt')">🟣 Sleep Recovery Deficit</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Grid: Simulator + SHAP Waterfall -->
+  <main class="main-layout" id="simulator">
+    
+    <!-- Controls Column -->
+    <section class="panel controls-panel">
+      <div class="panel-header">
+        <h2 class="panel-title">1. Athlete Workload & Wellness Inputs</h2>
+        <span class="panel-tag">Live Dynamic Inputs</span>
+      </div>
+
+      <!-- Training Load Group -->
+      <div class="input-group">
+        <div class="group-title">Training Workload Dynamics</div>
+        
+        <div class="control-item">
+          <div class="control-label-row">
+            <span class="control-name">Acute 7-Day Workload (ATL)</span>
+            <span class="control-val" id="val-atl">1,800 sRPE</span>
+          </div>
+          <input type="range" id="slider-atl" min="200" max="4500" step="50" value="1800" oninput="updateSimulation()">
+          <div class="control-sub">Sum of past 7 days (Duration &times; RPE)</div>
+        </div>
+
+        <div class="control-item">
+          <div class="control-label-row">
+            <span class="control-name">Chronic 28-Day Workload (CTL)</span>
+            <span class="control-val" id="val-ctl">1,700 sRPE</span>
+          </div>
+          <input type="range" id="slider-ctl" min="400" max="4000" step="50" value="1700" oninput="updateSimulation()">
+          <div class="control-sub">Rolling 4-week cumulative fitness baseline</div>
+        </div>
+
+        <div class="acwr-badge-row">
+          <span>Acute:Chronic Workload Ratio (ACWR):</span>
+          <span class="acwr-pill" id="badge-acwr">1.06 &bull; Optimal Sweet Spot</span>
+        </div>
+      </div>
+
+      <!-- Subjective Wellness Group -->
+      <div class="input-group">
+        <div class="group-title">Daily Subjective Wellness Check-in</div>
+
+        <div class="grid-2col">
+          <div class="control-item">
+            <div class="control-label-row">
+              <span class="control-name">Muscle Soreness</span>
+              <span class="control-val" id="val-soreness">3 / 10</span>
+            </div>
+            <input type="range" id="slider-soreness" min="1" max="10" step="1" value="3" oninput="updateSimulation()">
+          </div>
+
+          <div class="control-item">
+            <div class="control-label-row">
+              <span class="control-name">Fatigue Level</span>
+              <span class="control-val" id="val-fatigue">3 / 10</span>
+            </div>
+            <input type="range" id="slider-fatigue" min="1" max="10" step="1" value="3" oninput="updateSimulation()">
+          </div>
+        </div>
+
+        <div class="grid-2col">
+          <div class="control-item">
+            <div class="control-label-row">
+              <span class="control-name">Sleep Duration</span>
+              <span class="control-val" id="val-sleep-dur">8.0 hrs</span>
+            </div>
+            <input type="range" id="slider-sleep-dur" min="4.0" max="11.0" step="0.5" value="8.0" oninput="updateSimulation()">
+          </div>
+
+          <div class="control-item">
+            <div class="control-label-row">
+              <span class="control-name">Sleep Quality</span>
+              <span class="control-val" id="val-sleep-qual">7 / 10</span>
+            </div>
+            <input type="range" id="slider-sleep-qual" min="1" max="10" step="1" value="7" oninput="updateSimulation()">
+          </div>
+        </div>
+
+        <div class="grid-2col">
+          <div class="control-item">
+            <div class="control-label-row">
+              <span class="control-name">Readiness to Train</span>
+              <span class="control-val" id="val-readiness">7 / 10</span>
+            </div>
+            <input type="range" id="slider-readiness" min="1" max="10" step="1" value="7" oninput="updateSimulation()">
+          </div>
+
+          <div class="control-item">
+            <div class="control-label-row">
+              <span class="control-name">Stress Level</span>
+              <span class="control-val" id="val-stress">3 / 10</span>
+            </div>
+            <input type="range" id="slider-stress" min="1" max="10" step="1" value="3" oninput="updateSimulation()">
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Prediction & SHAP Output Column -->
+    <section class="panel results-panel">
+      <div class="panel-header">
+        <h2 class="panel-title">2. Model Predictions & Risk Analysis</h2>
+        <span class="panel-tag">XGBoost &amp; TreeSHAP</span>
+      </div>
+
+      <!-- Gauges Grid -->
+      <div class="gauges-grid">
+        <div class="gauge-card">
+          <div class="gauge-header">
+            <span class="gauge-title">7-Day Injury Risk Probability</span>
+            <span class="gauge-pill" id="risk-pill">Low Risk</span>
+          </div>
+          <div class="gauge-number-row">
+            <span class="gauge-number" id="risk-pct">2.1%</span>
+            <span class="gauge-sub">Baseline Injury Rate: 1.5%</span>
+          </div>
+          <div class="risk-bar-track">
+            <div class="risk-bar-fill" id="risk-progress-bar" style="width: 4%;"></div>
+          </div>
+        </div>
+
+        <div class="gauge-card">
+          <div class="gauge-header">
+            <span class="gauge-title">Next-Day Readiness Forecast</span>
+            <span class="gauge-pill readiness" id="readiness-pill">High Readiness</span>
+          </div>
+          <div class="gauge-number-row">
+            <span class="gauge-number" id="readiness-score">7.4</span>
+            <span class="gauge-sub">Scale: 1.0 (Low) to 10.0 (Optimal)</span>
+          </div>
+          <div class="risk-bar-track">
+            <div class="risk-bar-fill readiness" id="readiness-progress-bar" style="width: 74%;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Coaching Recommendation Alert Box -->
+      <div class="alert-box" id="coach-alert">
+        <div class="alert-icon" id="coach-icon">✅</div>
+        <div class="alert-content">
+          <div class="alert-heading" id="coach-heading">Optimal Training Condition</div>
+          <div class="alert-body" id="coach-message">Athlete recovery metrics are well balanced against recent workloads. Cleared for standard high-intensity drills.</div>
+        </div>
+      </div>
+
+      <!-- Real-time SHAP Waterfall -->
+      <div class="shap-waterfall-card" id="shap-section">
+        <div class="shap-header">
+          <div>
+            <h3 class="shap-title">Live SHAP Attribution Waterfall</h3>
+            <p class="shap-sub">Showing exact positive &amp; negative drivers shifting predicted risk from baseline.</p>
+          </div>
+        </div>
+        <div class="waterfall-bars" id="waterfall-container">
+          <!-- Dynamically populated by app.js -->
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- Interactive Athlete Longitudinal Timeline -->
+  <section class="timeline-section" id="timeline">
+    <div class="section-header">
+      <div>
+        <h2 class="section-title">3. Longitudinal SoccerMon Athlete Explorer</h2>
+        <p class="section-sub">Explore real 2-year workload trajectories, ACWR sweet spots, and injury events from the dataset.</p>
+      </div>
+      <div class="athlete-select-wrapper">
+        <label for="athlete-select">Select Athlete:</label>
+        <select id="athlete-select" onchange="switchAthleteTimeline()">
+          <option value="TeamA-5cd7a61b (Forward, High Load)">TeamA-5cd7a61b (Forward, High Load)</option>
+          <option value="TeamA-d7299614 (Midfielder, Consistent)">TeamA-d7299614 (Midfielder, Consistent)</option>
+          <option value="TeamA-4051bba7 (Defender, Multiple Reports)">TeamA-4051bba7 (Defender, Multiple Reports)</option>
+          <option value="TeamB-4405bb1f (Team B Athlete)">TeamB-4405bb1f (Team B Athlete)</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-container">
+        <canvas id="timelineChart"></canvas>
+      </div>
+      <div class="chart-legend-custom">
+        <span class="legend-chip load">Daily Load (sRPE)</span>
+        <span class="legend-chip atl">ATL (7-Day Acute)</span>
+        <span class="legend-chip ctl">CTL (28-Day Chronic)</span>
+        <span class="legend-chip acwr">ACWR Ratio</span>
+        <span class="legend-chip injury">Reported Injury Incident</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Research Metrics & Benchmarks -->
+  <section class="benchmarks-section" id="benchmarks">
+    <div class="section-header">
+      <div>
+        <h2 class="section-title">4. Research Benchmarks &amp; Methodology</h2>
+        <p class="section-sub">Strict chronological evaluation across 4 machine learning architectures.</p>
+      </div>
+    </div>
+
+    <div class="benchmark-grid">
+      <div class="benchmark-card">
+        <h3 class="card-heading">Model Performance Comparison (Test Set)</h3>
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Model</th>
+                <th>PR-AUC (Primary)</th>
+                <th>ROC-AUC</th>
+                <th>Recall</th>
+                <th>F1-Score</th>
+                <th>Brier Score</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="highlight-row">
+                <td><strong>XGBoost (Top Model)</strong></td>
+                <td><span class="metric-badge primary">0.0391</span></td>
+                <td>0.7508</td>
+                <td>50.0%</td>
+                <td>0.023</td>
+                <td>0.1035</td>
+              </tr>
+              <tr>
+                <td>LightGBM</td>
+                <td>0.0114</td>
+                <td>0.6397</td>
+                <td>50.0%</td>
+                <td>0.026</td>
+                <td>0.1020</td>
+              </tr>
+              <tr>
+                <td>Random Forest</td>
+                <td>0.0080</td>
+                <td>0.7389</td>
+                <td>10.0%</td>
+                <td>0.010</td>
+                <td>0.1358</td>
+              </tr>
+              <tr>
+                <td>Logistic Regression</td>
+                <td>0.0165</td>
+                <td>0.8485</td>
+                <td>0.0%</td>
+                <td>0.000</td>
+                <td>0.1563</td>
+              </tr>
+              <tr class="baseline-row">
+                <td><em>Random Prevalence Baseline</em></td>
+                <td><em>0.0150</em></td>
+                <td><em>0.5000</em></td>
+                <td>-</td>
+                <td>-</td>
+                <td>-</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="benchmark-card">
+        <h3 class="card-heading">Top Pre-Injury Statistical Risk Factors</h3>
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Feature</th>
+                <th>Pre-Injury</th>
+                <th>Healthy</th>
+                <th>Cliff's Delta</th>
+                <th>Significance</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Readiness to Train</strong></td>
+                <td>6.00 / 10</td>
+                <td>7.00 / 10</td>
+                <td><span class="delta-neg">-0.496</span></td>
+                <td>p &lt; 10⁻⁶² (Large)</td>
+              </tr>
+              <tr>
+                <td><strong>Recovery Deficit Index</strong></td>
+                <td>-1.00</td>
+                <td>-3.00</td>
+                <td><span class="delta-pos">+0.348</span></td>
+                <td>p &lt; 10⁻⁵³ (Medium)</td>
+              </tr>
+              <tr>
+                <td><strong>ACWR Ratio</strong></td>
+                <td>1.06</td>
+                <td>0.70</td>
+                <td><span class="delta-pos">+0.364</span></td>
+                <td>p &lt; 10⁻⁵⁰ (Medium)</td>
+              </tr>
+              <tr>
+                <td><strong>Workload &times; Soreness</strong></td>
+                <td>2.85</td>
+                <td>1.73</td>
+                <td><span class="delta-pos">+0.344</span></td>
+                <td>p &lt; 10⁻⁴⁵ (Medium)</td>
+              </tr>
+              <tr>
+                <td><strong>Acute Training Load (ATL)</strong></td>
+                <td>316.4 sRPE</td>
+                <td>158.6 sRPE</td>
+                <td><span class="delta-pos">+0.323</span></td>
+                <td>p &lt; 10⁻⁴⁰ (Small)</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Scientific Disclaimer Footer -->
+  <footer class="footer">
+    <div class="footer-container">
+      <div class="footer-note">
+        <strong>Scientific &amp; Medical Disclaimer:</strong> AthleteLoad is an applied sports-science machine learning research project based on self-reported athlete monitoring data from the SoccerMon dataset. It is designed for research, sports performance analysis, and workload calibration, and is not intended for clinical medical diagnosis or patient decision-making.
+      </div>
+      <div class="footer-copy">
+        &copy; 2026 AthleteLoad &bull; Open-source under MIT License &bull; <a href="https://github.com/prithvi-kaizen/Athlete-Load" target="_blank" rel="noreferrer">GitHub Repository</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
