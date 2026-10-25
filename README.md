@@ -13,6 +13,20 @@
 
 An explainable sports-science machine learning system that uses daily training loads and self-reported wellness logs to estimate short-term football injury risk (7-day window) and explain the exact physiological drivers behind every prediction.
 
+## Frontend preview
+
+The editorial frontend uses a static HTML/CSS/JavaScript setup with no build step:
+
+```bash
+python3 -m http.server 8088
+# Open http://localhost:8088
+node --test tests/frontend.test.cjs
+```
+
+The scenario lab uses illustrative browser formulas. It does not run the trained XGBoost model or calculate TreeSHAP. Model comparison tables are populated separately from the repository's exported results. The athlete explorer includes four representative records from `data.js`, with CSV downloads for their complete daily histories.
+
+Chart.js, Three.js and the fonts load from external providers. If a library is unavailable, the simulator remains usable and the relevant view provides an explanation. See [DESIGN.md](DESIGN.md) for the owner-selected direction and [frontend verification](docs/frontend-verification.md) for the Anti Slop delivery gate and checks.
+
 ---
 
 ```mermaid
